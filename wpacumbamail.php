@@ -150,7 +150,7 @@ function unregister_wp_widget() {
 }
 
 function pw_load_scripts($hook) {
-    wp_enqueue_script( 'tableSort', plugin_dir_url(dirname(__FILE__) . '/wpacumbamail.php').'/js/jquery-ui-1.10.4.custom.min.js');
+    wp_enqueue_script( 'tableSort', plugin_dir_url(dirname(__FILE__) . '/wpacumbamail.php').'js/jquery-ui-1.10.4.custom.min.js');
 }
 add_action('admin_enqueue_scripts', 'pw_load_scripts');
 
