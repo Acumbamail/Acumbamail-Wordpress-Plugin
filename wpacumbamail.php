@@ -60,15 +60,14 @@ function wpacumbamail_options_page(){
                 delete_option('acumba_chosen_list');
                 delete_option('acumba_widget_fields');
                 delete_option('acumba_ordered_fields');
-                echo '<div class="updated">Cambios actualizados correctamente</div>';
             }else{
                 delete_option('acumba_plugin_data');
                 delete_option('acumba_chosen_list');
                 delete_option('acumba_widget_fields');
                 delete_option('acumba_ordered_fields');
                 add_action('widgets_init', 'unregister_wp_widget');
-                echo '<div class="updated">Cuenta eliminada correctamente</div>';
             }
+            echo '<div class="updated">Cambios actualizados correctamente</div>';
         }
     }
 
@@ -153,10 +152,4 @@ function pw_load_scripts($hook) {
     wp_enqueue_script( 'tableSort', plugins_url( 'wpacumbamail/js/jquery-ui-1.10.4.custom.min.js' , dirname(__FILE__) ) );
 }
 add_action('admin_enqueue_scripts', 'pw_load_scripts');
-
-function invenDescSort($item1,$item2)
-{
-    if ($item1['order'] == $item2['order']) return 0;
-    return ($item1['order'] > $item2['order']) ? 1 : -1;
-}
 ?>
