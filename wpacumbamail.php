@@ -29,7 +29,7 @@ function wpacumbamail(){
         'manage_options',
         'wpacumbamail',
         'wpacumbamail_options_page',
-        plugins_url('wpacumbamail/img/acumba_logo.png')
+        plugin_dir_url(dirname(__FILE__) . '/wpacumbamail.php').'img/acumba_logo.png'
     );
 }
 
@@ -60,14 +60,15 @@ function wpacumbamail_options_page(){
                 delete_option('acumba_chosen_list');
                 delete_option('acumba_widget_fields');
                 delete_option('acumba_ordered_fields');
+                echo '<div class="updated">Cambios actualizados correctamente</div>';
             }else{
                 delete_option('acumba_plugin_data');
                 delete_option('acumba_chosen_list');
                 delete_option('acumba_widget_fields');
                 delete_option('acumba_ordered_fields');
                 add_action('widgets_init', 'unregister_wp_widget');
+                echo '<div class="updated">Cuenta eliminada correctamente</div>';
             }
-            echo '<div class="updated">Cambios actualizados correctamente</div>';
         }
     }
 
@@ -149,7 +150,8 @@ function unregister_wp_widget() {
 }
 
 function pw_load_scripts($hook) {
-    wp_enqueue_script( 'tableSort', plugins_url( 'wpacumbamail/js/jquery-ui-1.10.4.custom.min.js' , dirname(__FILE__) ) );
+    wp_enqueue_script( 'tableSort', plugin_dir_url(dirname(__FILE__) . '/wpacumbamail.php').'/js/jquery-ui-1.10.4.custom.min.js');
 }
 add_action('admin_enqueue_scripts', 'pw_load_scripts');
+
 ?>
