@@ -14,11 +14,12 @@ jQuery(document).ready(function(){
                 datatosend[jQuery(this).prop('name')]=jQuery(this).val();
             }
         });
-        console.log(datatosend);
-        jQuery('#submit_acumba').prop('value',"Cargando...");
-        var query_form = "<?php echo plugin_dir_url(__FILE__);?>query_form.php";
 
-        jQuery.post(query_form, JSON.stringify(datatosend)).done(function(data) {
+        jQuery('#submit_acumba').prop('value',"Cargando...");
+
+        datatosend['action']="send_acumbaform";
+        console.log(JSON.stringify(datatosend));
+        jQuery.ajax({type:"POST",url:ajaxurl, data:datatosend}).done(function(data) {
             console.log(data);
             if(data=="Te has suscrito correctamente."){
                 jQuery('#acumba_info').css('color','green');

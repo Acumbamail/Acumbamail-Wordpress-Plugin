@@ -35,6 +35,11 @@ function wpacumbamail(){
 
 add_action('admin_menu', 'wpacumbamail');
 
+//Setup of AJAX Calls for Signup Form in FrontEnd
+add_action('wp_head', 'add_ajax_library');
+add_action('wp_ajax_send_acumbaform', 'send_api_acumbamail');
+add_action('wp_ajax_nopriv_send_acumbaform', 'send_api_acumbamail');
+
 function wpacumbamail_options_page(){
     /*
      * Función que muestra el código HTML para la página de ajustes en la administración
@@ -145,13 +150,52 @@ function wpacumbamail_options_page(){
     require('inc/admin_page.php');
 }
 
-function unregister_wp_widget() {
-    unregister_widget('WPAcumbamail_Widget');
+function load_scripts($hook) {
+    wp_enqueue_script('jquery-ui-core');
+    wp_enqueue_script('jquery-ui-widget');
+    wp_enqueue_script('jquery-ui-mouse');
+    wp_enqueue_script('jquery-ui-sortable');
+}
+add_action('admin_enqueue_scripts', 'load_scripts');
+
+function add_ajax_library() {
+
+    $html = '<script type="text/javascript">';
+        $html .= 'var ajaxurl = "' . admin_url( 'admin-ajax.php' ) . '"';
+    $html .= '</script>';
+
+    echo $html;
+
 }
 
-function pw_load_scripts($hook) {
-    wp_enqueue_script( 'tableSort', plugin_dir_url(dirname(__FILE__) . '/wpacumbamail.php').'js/jquery-ui-1.10.4.custom.min.js');
+function send_api_acumbamail() {
+    if($_POST!=''){
+        $options = get_option('acumba_plugin_data');
+        $list = get_option('acumba_chosen_list');
+
+        if($options != ''){
+            $acumba_customer_id = $options['acumba_customer_id'];
+            $acumba_auth_token = $options['acumba_auth_token'];
+        }
+
+        if($list != ''){
+            $chosen_list=$list['acumba_chosen_list'];
+        }
+
+        $api = new AcumbamailAPI($acumba_customer_id,$acumba_auth_token);
+        $response = $api->addSubscriber($chosen_list,$_POST);
+
+        if(isset($response['error'])){
+            print_r($response['error']);
+        }elseif (isset($response['subscriber_id'])){
+            echo "Te has suscrito correctamente.";
+        }else{
+            echo "Ha ocurrido un error. Revisa todos los campos o comprueba tu conexión a internet.";
+        }
+    }else{
+            echo "Ha ocurrido un error. Revisa todos los campos o comprueba tu conexión a internet.";
+    }
+    die();
 }
-add_action('admin_enqueue_scripts', 'pw_load_scripts');
 
 ?>
