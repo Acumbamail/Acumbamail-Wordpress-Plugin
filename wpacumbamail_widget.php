@@ -62,5 +62,9 @@ class WPAcumbamail_Widget extends WP_WIDGET{
     }
 }
 
-add_action('widgets_init', function(){register_widget('WPAcumbamail_Widget');});
+function register_acumba_widget(){
+    register_widget('WPAcumbamail_Widget');
+}
+
+add_action('widgets_init','register_acumba_widget');
 ?>

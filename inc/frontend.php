@@ -42,11 +42,19 @@ jQuery(document).ready(function(){
     $ordered = get_option('acumba_ordered_fields');
 
     if($list != ''){
-        if(!empty($title) && !empty($subtitle) && !empty($button)){
             $chosen_list=$list['acumba_chosen_list'];
 
             echo $before_widget;
-            if (!empty($title)) echo $before_title . $title . $after_title;
+            if (!empty($title)){
+              echo $before_title . $title . $after_title;
+            }else{
+              echo "Suscríbete a nuestro newsletter";
+            }
+
+            if(empty($button)){
+                $button="Suscríbete";
+            }
+
             if ($subtitle) echo "<div id=\"acumba_info\" style=\"margin-button: 5px\">$subtitle</div>";
             echo '<form action="http://acumbamail.com/signup/'.$chosen_list.'/" method="POST">';
 
@@ -63,9 +71,6 @@ jQuery(document).ready(function(){
             echo "<p style=\"margin:5px 0 0 0;\"><input type=\"button\" value=\"$button\" id=\"submit_acumba\"></p>";
             echo $after_widget;
             echo "</form>";
-        } else {
-            echo $before_widget.'Rellena el texto que deseas que aparezca en el widget para visualizarlo correctamente'.$after_widget;
-        }
     }else{
         echo $before_widget.'Configura el plugin de Acumbamail en la interfaz para visualizar el Widget'.$after_widget;
     }
