@@ -3,7 +3,7 @@
  *  Plugin Name: Acumbamail
  *  Plugin URI:
  *  Description: Plugin para Wordpress destinado a la creación de Widgets para la suscripción de usuarios a listas
- *  Version: 1.0.1
+ *  Version: 1.1.6
  *  Author: Acumbamail
  *  Author URI: http://acumbamail.com
  *  License: GPLv2
@@ -19,7 +19,7 @@ require('wpacumbamail_widget.php');
 
 function wpacumbamail(){
     /*
-     * Usa la función add_menu_page para añadir el enlace en el menú de administración
+     * Usa la función add_menu_page para añadir el enlace en el menu de administración
      * add_menu_page( $page_title, $menu_title, $capability, $menu_slug, $function, $icon_url, $position );
      */
 
@@ -41,6 +41,9 @@ add_action('wp_ajax_send_acumbaform', 'send_api_acumbamail');
 add_action('wp_ajax_nopriv_send_acumbaform', 'send_api_acumbamail');
 
 function wpacumbamail_options_page(){
+    if(!function_exists('curl_version')){
+        echo '<div class="wrap"><div class="updated">Para la utilización del plugin necesitas cURL instalado en tu servidor</div></div>';
+    }else{
     /*
      * Función que muestra el código HTML para la página de ajustes en la administración
      * y realiza operaciones para el guardado de variables de ajustes
@@ -57,8 +60,8 @@ function wpacumbamail_options_page(){
 
         if($hidden_field == 'Y'){
             if($_POST['acumba_customer_id']!='' && $_POST['acumba_auth_token']!='') {
-                $options['acumba_customer_id'] = $_POST['acumba_customer_id'];
-                $options['acumba_auth_token'] = $_POST['acumba_auth_token'];
+                $options['acumba_customer_id'] = trim($_POST['acumba_customer_id']);
+                $options['acumba_auth_token'] = trim($_POST['acumba_auth_token']);
                 $options['last_updated'] = time();
 
                 update_option('acumba_plugin_data', $options);
@@ -82,21 +85,23 @@ function wpacumbamail_options_page(){
     //TODO
     if(isset($_POST['changed_order'])){
         $ordered=array();
-        $hidden_field = $_POST['changed_order'];
-
-        unset($_POST['changed_order']);
-        if($hidden_field == 'Y'){
-            foreach ($_POST as $key=>$value) {
-                if(strpos($key,'_given') !== false){
-                    $index=strtok($key, '_');
-                    $widget_fields[$index]['name_given']=$value;
-                }else{
-                    $ordered[$value]=$key;
-                }
-            }
-            update_option('acumba_widget_fields', $widget_fields);
-            update_option('acumba_ordered_fields', $ordered);
+        if(isset($_POST['theme_style'])){
+            update_option('theme_style', "y");
+        }else{
+            update_option('theme_style', "n");
         }
+        unset($_POST['changed_order']);
+        unset($_POST['theme_style']);
+        foreach ($_POST as $key=>$value) {
+            if(strpos($key,'-given') !== false){
+                $index=strtok($key, '-');
+                $widget_fields[$index]['name_given']=$value;
+            }else{
+                $ordered[$value]=$key;
+            }
+        }
+        update_option('acumba_widget_fields', $widget_fields);
+        update_option('acumba_ordered_fields', $ordered);
     }
 
     $options = get_option('acumba_plugin_data');
@@ -124,7 +129,7 @@ function wpacumbamail_options_page(){
         $response_lists = $api->getLists();
 
         if($response_lists!='' && $chosen_list!=''){
-            $mergetags = $api->getFields($chosen_list);
+            $mergetags = $api->getMergeFieldsWordPress($chosen_list);
             if( (sizeof($mergetags)>sizeof($widget_fields)) || isset($_POST['chosen_list']) ){
                 if(!isset($_POST['chosen_list'])) echo '<div class="updated">Actualizados los campos del formulario</div>';
 
@@ -132,13 +137,14 @@ function wpacumbamail_options_page(){
                 $ordered = array();
                 $i = 0;
                 foreach (array_keys($mergetags) as $mergetag) {
-                    $widget_fields[$mergetag] = array(
+                    $index = str_replace(" ", "_", $mergetag);
+                    $widget_fields[$index] = array(
                         "name" => $mergetag,
                         "type" => $mergetags[$mergetag],
-                        "name_given" => $mergetag,
+                        "name_given" => strtolower($mergetag),
                     );
 
-                    $ordered[$i++] = $mergetag;
+                    $ordered[$i++] = $index;
                 }
 
                 update_option('acumba_widget_fields', $widget_fields);
@@ -147,7 +153,9 @@ function wpacumbamail_options_page(){
         }
     }
     wp_enqueue_script('jquery');
+
     require('inc/admin_page.php');
+    }
 }
 
 function load_scripts($hook) {
@@ -172,7 +180,8 @@ function send_api_acumbamail() {
     if($_POST!=''){
         $options = get_option('acumba_plugin_data');
         $list = get_option('acumba_chosen_list');
-
+	$double_optin=$_POST['double_optin'];
+  	$welcome_email=$_POST['welcome_email'];
         if($options != ''){
             $acumba_customer_id = $options['acumba_customer_id'];
             $acumba_auth_token = $options['acumba_auth_token'];
@@ -181,9 +190,8 @@ function send_api_acumbamail() {
         if($list != ''){
             $chosen_list=$list['acumba_chosen_list'];
         }
-
         $api = new AcumbamailAPI($acumba_customer_id,$acumba_auth_token);
-        $response = $api->addSubscriber($chosen_list,$_POST);
+        $response = $api->addSubscriber($chosen_list,$_POST,$double_optin,$welcome_email);
 
         if(isset($response['error'])){
             print_r($response['error']);

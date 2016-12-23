@@ -1,13 +1,16 @@
 <?php
 /* PHP Class for Acumbamail API */
+/* ONLY FOR WORDPRESS*/
 
 class AcumbamailAPI{
     private $auth_token;
     private $customer_id;
+    private $http_method;
 
     function __construct($customer_id, $auth_token){
         $this->auth_token = $auth_token;
         $this->customer_id = $customer_id;
+        $this->http_method = get_option('acumba_http',"https");
     }
 
     // createList($sender_email,$name,$company,$country,$city,$address,$phone)
@@ -80,7 +83,7 @@ class AcumbamailAPI{
 
     // addSubscriber($list_id,$merge_fields)
     // Agrega un suscriptor a una lista
-    public function addSubscriber($list_id,$merge_fields){
+    public function addSubscriber($list_id,$merge_fields,$double_optin,$welcome_email){
         $request = "addSubscriber";
         $merge_fields_send=array();
 
@@ -90,6 +93,8 @@ class AcumbamailAPI{
 
         $data = array(
             'list_id' => $list_id,
+            'double_optin' => $double_optin,
+	    'welcome_email' => $welcome_email,
         );
 
         $data=array_merge($data,$merge_fields_send);
@@ -131,10 +136,18 @@ class AcumbamailAPI{
         return $this->callAPI($request, $data);
     }
 
+    // getMergeFieldsWordPress($list_id)
+    // Obtiene los merge fields de la lista y el tipo que tienen
+    public function getMergeFieldsWordPress($list_id){
+        $request = "getMergeFieldsWordPress";
+        $data = array('list_id' => $list_id);
+        return $this->callAPI($request, $data);
+    }
+
     // callAPI($request, $data = array())
     // Realiza la llamada a la API de Acumbamail con los datos proporcionados
     function callAPI($request, $data = array()){
-        $url = "http://acumbamail.com/api/1/".$request.'/';
+        $url = "https://acumbamail.com/api/1/".$request.'/';
 
         $fields = array(
             'customer_id' => $this->customer_id,
@@ -151,16 +164,30 @@ class AcumbamailAPI{
             $postvars .= $key.'='.$value.'&';
         }
 
-        $ch = curl_init();
+        if(function_exists("curl_init")){
+            $ch = curl_init();
 
-        curl_setopt($ch,CURLOPT_URL, $url);
-        curl_setopt($ch,CURLOPT_POST, true);
-        curl_setopt($ch,CURLOPT_POSTFIELDS, $postvars);
-        curl_setopt($ch,CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch,CURLOPT_URL, $url);
+            curl_setopt($ch,CURLOPT_POST, true);
+            curl_setopt($ch,CURLOPT_POSTFIELDS, $postvars);
+            curl_setopt($ch,CURLOPT_RETURNTRANSFER, true);
+            if (strpos($url, 'https') !== false){
+                curl_setopt ($ch, CURLOPT_CAINFO, dirname(__FILE__) . "/assets/cacert.pem");
+                //curl_setopt($ch,CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch,CURLOPT_POSTREDIR, 3);
+            }
 
-        $response=json_decode(curl_exec($ch),true);
-        curl_close($ch);
+            $response = curl_exec($ch);
 
+            if(curl_errno($ch)){
+                $response = "CURL ERROR: ".curl_error($ch);
+            }else{
+                $response=json_decode($response,true);
+            }
+            curl_close($ch);
+        }else{
+            $response = "Para utilizar el plugin necesitas cURL instalado en tu servidor";
+        }
         return $response;
     }
 }
