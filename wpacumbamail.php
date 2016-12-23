@@ -14,7 +14,7 @@
  * Añade un enlace a nuestro plugin en la administración de WordPress
 */
 
-require('acumbamail.class.php');
+require('api/acumbamail.class.php');
 require('wpacumbamail_widget.php');
 
 function wpacumbamail(){
